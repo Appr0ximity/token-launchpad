@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { InputField } from "./InputField"
+import { InputField } from "../ui/InputField"
 import { createInitializeMint2Instruction, getMinimumBalanceForRentExemptMint, MINT_SIZE, TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { useConnection, useWallet } from "@solana/wallet-adapter-react"
 import { Keypair, PublicKey, SystemProgram, Transaction} from "@solana/web3.js"
