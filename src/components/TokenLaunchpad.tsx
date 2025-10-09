@@ -2,10 +2,12 @@ import { useState } from "react"
 import { InputField } from "../ui/InputField"
 import { createInitializeMetadataPointerInstruction, createInitializeMint2Instruction, ExtensionType, getMintLen, LENGTH_SIZE, TOKEN_2022_PROGRAM_ID, TYPE_SIZE } from "@solana/spl-token"
 import { useConnection, useWallet } from "@solana/wallet-adapter-react"
-import { Keypair, PublicKey, SystemProgram, Transaction} from "@solana/web3.js"
+import { Keypair, PublicKey, SendTransactionError, SystemProgram, Transaction} from "@solana/web3.js"
 import { createInitializeInstruction, createUpdateFieldInstruction, pack, type TokenMetadata } from "@solana/spl-token-metadata"
 
+
 export const TokenLaunchpad = ()=>{
+
 
     const [formData, setFormData] = useState<{ 
         name: string,
@@ -25,6 +27,7 @@ export const TokenLaunchpad = ()=>{
     const [loading, setLoading] = useState(false)
     const [success, setSuccess] = useState(false)
 
+
     const createToken = async (
         payerPublicKey: PublicKey,
         freezeAuthority: PublicKey | null,
@@ -40,6 +43,7 @@ export const TokenLaunchpad = ()=>{
             return
         }
 
+
         const metaData: TokenMetadata = {
             updateAuthority: wallet.publicKey,
             mint: mint.publicKey,
@@ -51,9 +55,11 @@ export const TokenLaunchpad = ()=>{
         const metadataExtension = TYPE_SIZE + LENGTH_SIZE
         const metadataLen = pack(metaData).length
         const mintLen = getMintLen([ExtensionType.MetadataPointer])
-        const lamports = await connection.getMinimumBalanceForRentExemption(mintLen + metadataExtension + metadataLen)
+        const lamports = await connection.getMinimumBalanceForRentExemption(mintLen + metadataLen)
+
 
         setLoading(true)
+
 
         try{
             const initializeMetadataPointerInstruction = createInitializeMetadataPointerInstruction(
@@ -63,6 +69,7 @@ export const TokenLaunchpad = ()=>{
                 TOKEN_2022_PROGRAM_ID
             );
 
+
             const initializeMintInstruction = createInitializeMint2Instruction(
                 mint.publicKey,
                 decimals,
@@ -70,6 +77,7 @@ export const TokenLaunchpad = ()=>{
                 freezeAuthority,
                 TOKEN_2022_PROGRAM_ID
             )
+
 
             const initializeMetadataInstruction = createInitializeInstruction({
                 programId: TOKEN_2022_PROGRAM_ID,
@@ -82,6 +90,7 @@ export const TokenLaunchpad = ()=>{
                 uri: metaData.uri
             });
 
+
             const updateFieldInstruction = createUpdateFieldInstruction({
                 programId: TOKEN_2022_PROGRAM_ID,
                 metadata: mint.publicKey,
@@ -89,6 +98,7 @@ export const TokenLaunchpad = ()=>{
                 field: metaData.additionalMetadata[0][0],
                 value: metaData.additionalMetadata[0][1]
             })
+
 
 
             const transaction = new Transaction().add(
@@ -101,33 +111,27 @@ export const TokenLaunchpad = ()=>{
                 }),
                 initializeMetadataPointerInstruction,
                 initializeMintInstruction,
+                initializeMetadataInstruction,
+                updateFieldInstruction
             );
+
 
             const {blockhash} = await connection.getLatestBlockhash()
             transaction.recentBlockhash = blockhash;
             transaction.feePayer = wallet.publicKey
             transaction.partialSign(mint)
 
+
             const signedTransaction = await wallet.signTransaction(transaction)
             const signature = await connection.sendRawTransaction(signedTransaction.serialize())
-            await connection.confirmTransaction(signature)
+            const confirmation = await connection.confirmTransaction(signature, "confirmed")
 
-            const metadataTransaction = new Transaction().add(
-                initializeMetadataInstruction,
-                updateFieldInstruction
-            );
 
-            const {blockhash: blockhash2} = await connection.getLatestBlockhash()
-            metadataTransaction.recentBlockhash = blockhash2
-            metadataTransaction.feePayer = wallet.publicKey
+            if (confirmation.value.err) {
+                throw new Error('Transaction failed to confirm');
+            }
 
-            const signedMetadataTransaction = await wallet.signTransaction(metadataTransaction)
-            const metadataSignature = await connection.sendRawTransaction(signedMetadataTransaction.serialize())
-            await connection.confirmTransaction(metadataSignature)
 
-            console.log('mintLen:', mintLen);
-            console.log('metadataLen:', metadataLen);
-            console.log('total space:', mintLen + metadataExtension + metadataLen);
 
             alert(`Token created! Mint address: ${mint.publicKey.toBase58()}`);
             setSuccess(true)
@@ -135,16 +139,35 @@ export const TokenLaunchpad = ()=>{
                 setSuccess(false)
             },2000)
 
+
         }catch(error){
-            alert(`Failed to create token: ${error || 'Unknown error'}`);
-            console.log(error)
+            console.log('Full error object:', error);
+            
+            if (error && typeof error === 'object' && 'logs' in error) {
+                const logs = error.logs as string[] | undefined;
+                console.log('Simulation logs:', logs);
+                
+                if (logs && logs.length > 0) {
+                    const lastLog = logs[logs.length - 1];
+                    if (lastLog.includes('success')) {
+                        alert(`Token created successfully! Mint: ${mint.publicKey.toBase58()}`);
+                        setSuccess(true);
+                        setTimeout(() => setSuccess(false), 2000);
+                        return;
+                    }
+                }
+            }
+            
+            alert(`Failed to create token: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }finally{
             setLoading(false)
         }
 
+
     }
     
     
+
 
     return <div>
         <InputField value={formData.name} onChange={(val) => setFormData({...formData, name: val})} placeholder='Name of Token'></InputField>
