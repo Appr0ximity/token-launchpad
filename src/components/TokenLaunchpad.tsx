@@ -2,7 +2,7 @@ import { useState } from "react"
 import { InputField } from "../ui/InputField"
 import { createInitializeMetadataPointerInstruction, createInitializeMint2Instruction, ExtensionType, getMintLen, LENGTH_SIZE, TOKEN_2022_PROGRAM_ID, TYPE_SIZE } from "@solana/spl-token"
 import { useConnection, useWallet } from "@solana/wallet-adapter-react"
-import { Keypair, PublicKey, SendTransactionError, SystemProgram, Transaction} from "@solana/web3.js"
+import { Keypair, PublicKey, SystemProgram, Transaction} from "@solana/web3.js"
 import { createInitializeInstruction, createUpdateFieldInstruction, pack, type TokenMetadata } from "@solana/spl-token-metadata"
 
 
@@ -52,8 +52,7 @@ export const TokenLaunchpad = ()=>{
             uri: formData.imageUrl,
             additionalMetadata: [["description", formData.description]]
         }
-        const metadataExtension = TYPE_SIZE + LENGTH_SIZE
-        const metadataLen = pack(metaData).length
+        const metadataLen = TYPE_SIZE + LENGTH_SIZE + pack(metaData).length
         const mintLen = getMintLen([ExtensionType.MetadataPointer])
         const lamports = await connection.getMinimumBalanceForRentExemption(mintLen + metadataLen)
 
