@@ -12,15 +12,15 @@ export const TokenLaunchpad = ()=>{
     const [formData, setFormData] = useState<{ 
         name: string,
         symbol: string,
-        decimals: number,
-        initialSupply: number,
+        decimals: string,
+        initialSupply: string,
         imageUrl: string,
         description: string
      }>({ 
         name: "",
         symbol: "",
-        decimals: 0,
-        initialSupply: 0,
+        decimals: "",
+        initialSupply: "",
         imageUrl: "",
         description: ""
     })
@@ -134,9 +134,8 @@ export const TokenLaunchpad = ()=>{
 
             alert(`Token creation submitted! Check status: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
 
-            // If user wants initial supply, mint it
-            if (formData.initialSupply && formData.initialSupply > 0) {
-                // Create ATA transaction
+            const initialSupply = parseInt(formData.initialSupply) || 0;
+            if (initialSupply > 0) {
                 const transaction2 = new Transaction().add(
                     createAssociatedTokenAccountInstruction(
                         wallet.publicKey,
@@ -148,8 +147,7 @@ export const TokenLaunchpad = ()=>{
                 );
                 await wallet.sendTransaction(transaction2, connection);
                 
-                // Mint tokens
-                const mintAmount = formData.initialSupply * Math.pow(10, decimals);
+                const mintAmount = initialSupply * Math.pow(10, decimals);
                 const transaction3 = new Transaction().add(
                     createMintToInstruction(
                         mint.publicKey,
@@ -195,11 +193,11 @@ export const TokenLaunchpad = ()=>{
 
     }
     
-    return <div>
+    return <div className='flex flex-col items-center'>
         <InputField value={formData.name} onChange={(val) => setFormData({...formData, name: val})} placeholder='Name of Token'></InputField>
         <InputField value={formData.symbol} onChange={(val) => setFormData({...formData, symbol: val})} placeholder='Symbol'></InputField>
-        <InputField value={formData.decimals} onChange={(val) => setFormData({...formData, decimals: parseInt(val)})} placeholder='Decimals'></InputField>
-        <InputField value={formData.initialSupply} onChange={(val) => setFormData({...formData, initialSupply: parseInt(val)})} placeholder='Decimals'></InputField>
+        <InputField value={formData.decimals} onChange={(val) => setFormData({...formData, decimals: val})} placeholder='Decimals'></InputField>
+        <InputField value={formData.initialSupply} onChange={(val) => setFormData({...formData, initialSupply: val})} placeholder='Initial Supply'></InputField>
         <InputField value={formData.description} onChange={(val) => setFormData({...formData, description: val})} placeholder='Description'></InputField>
         <InputField value={formData.imageUrl} onChange={(val) => setFormData({...formData, imageUrl: val})} placeholder='Image URL'></InputField>
         <button disabled = {loading} onClick={()=>{
@@ -209,7 +207,7 @@ export const TokenLaunchpad = ()=>{
         createToken(
             wallet.publicKey,
             null,
-            formData.decimals
+            parseInt(formData.decimals) || 0
         )}} className='bg-gray-400 rounded-sm px-3 py-1 my-3 cursor-pointer hover:bg-gray-800 duration-200 hover:text-white'>{loading?"Creating a token..":"Submit"}</button>
         {success && <span>Token Created Successfully!</span>}
     </div>
