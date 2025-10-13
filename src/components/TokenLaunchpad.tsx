@@ -193,42 +193,46 @@ export const TokenLaunchpad = ()=>{
 
     }
     
-    return <div className='w-full max-w-2xl mx-auto'>
-        <div className='border border-gray-800 rounded-lg p-8 bg-gray-950'>
+    return <div className='w-full max-w-3xl mx-auto'>
+        <div className='bg-[#0d0d0d] border border-gray-800 rounded-xl p-8 shadow-2xl' style={{boxShadow: '0 0 40px rgba(56, 189, 248, 0.1), 0 20px 25px -5px rgba(0, 0, 0, 0.5)'}}>
             <div className='mb-8'>
-                <h2 className='text-xl font-medium text-white mb-1'>
+                <h2 className='text-2xl font-semibold text-white mb-2'>
                     Create Token
                 </h2>
-                <p className='text-sm text-gray-500'>Fill in the details below to launch your token</p>
+                <p className='text-sm text-gray-400'>Deploy your SPL token on Solana in seconds</p>
             </div>
             
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
-                <div>
-                    <label className='text-xs text-gray-500 mb-1.5 block font-medium'>TOKEN NAME</label>
-                    <InputField value={formData.name} onChange={(val) => setFormData({...formData, name: val})} placeholder='My Token'></InputField>
+            <div className='space-y-6'>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    <div className='space-y-2'>
+                        <label className='text-sm font-medium text-white'>Token Name</label>
+                        <InputField value={formData.name} onChange={(val) => setFormData({...formData, name: val})} placeholder='e.g., My Token'></InputField>
+                    </div>
+                    <div className='space-y-2'>
+                        <label className='text-sm font-medium text-white'>Symbol</label>
+                        <InputField value={formData.symbol} onChange={(val) => setFormData({...formData, symbol: val})} placeholder='e.g., MTK'></InputField>
+                    </div>
                 </div>
-                <div>
-                    <label className='text-xs text-gray-500 mb-1.5 block font-medium'>SYMBOL</label>
-                    <InputField value={formData.symbol} onChange={(val) => setFormData({...formData, symbol: val})} placeholder='MTK'></InputField>
-                </div>
-                <div>
-                    <label className='text-xs text-gray-500 mb-1.5 block font-medium'>DECIMALS</label>
-                    <InputField value={formData.decimals} onChange={(val) => setFormData({...formData, decimals: val})} placeholder='9'></InputField>
-                </div>
-                <div>
-                    <label className='text-xs text-gray-500 mb-1.5 block font-medium'>INITIAL SUPPLY</label>
-                    <InputField value={formData.initialSupply} onChange={(val) => setFormData({...formData, initialSupply: val})} placeholder='1000000'></InputField>
-                </div>
-            </div>
 
-            <div className='space-y-4'>
-                <div>
-                    <label className='text-xs text-gray-500 mb-1.5 block font-medium'>DESCRIPTION</label>
-                    <InputField value={formData.description} onChange={(val) => setFormData({...formData, description: val})} placeholder='Describe your token'></InputField>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    <div className='space-y-2'>
+                        <label className='text-sm font-medium text-white'>Decimals</label>
+                        <InputField value={formData.decimals} onChange={(val) => setFormData({...formData, decimals: val})} placeholder='e.g., 9'></InputField>
+                    </div>
+                    <div className='space-y-2'>
+                        <label className='text-sm font-medium text-white'>Initial Supply</label>
+                        <InputField value={formData.initialSupply} onChange={(val) => setFormData({...formData, initialSupply: val})} placeholder='e.g., 1000000'></InputField>
+                    </div>
                 </div>
-                <div>
-                    <label className='text-xs text-gray-500 mb-1.5 block font-medium'>IMAGE URL</label>
-                    <InputField value={formData.imageUrl} onChange={(val) => setFormData({...formData, imageUrl: val})} placeholder='https://example.com/image.png'></InputField>
+
+                <div className='space-y-2'>
+                    <label className='text-sm font-medium text-white'>Description</label>
+                    <InputField value={formData.description} onChange={(val) => setFormData({...formData, description: val})} placeholder='Describe your token purpose and utility'></InputField>
+                </div>
+
+                <div className='space-y-2'>
+                    <label className='text-sm font-medium text-white'>Image URL</label>
+                    <InputField value={formData.imageUrl} onChange={(val) => setFormData({...formData, imageUrl: val})} placeholder='https://example.com/token-image.png'></InputField>
                 </div>
             </div>
 
@@ -244,14 +248,17 @@ export const TokenLaunchpad = ()=>{
                         parseInt(formData.decimals) || 0
                     )
                 }} 
-                className='w-full mt-8 bg-white text-black px-4 py-3 rounded font-medium hover:bg-gray-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white'
+                className='group w-full mt-8 bg-white text-black px-4 py-3 rounded-lg font-medium hover:bg-gray-200 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white shadow-lg relative overflow-hidden'
+                style={{boxShadow: '0 0 20px rgba(56, 189, 248, 0.2)'}}
+                onMouseEnter={(e) => !loading && (e.currentTarget.style.boxShadow = '0 0 30px rgba(56, 189, 248, 0.4), 0 0 60px rgba(56, 189, 248, 0.2)')}
+                onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 0 20px rgba(56, 189, 248, 0.2)')}
             >
                 {loading ? "Creating Token..." : "Create Token"}
             </button>
             
             {success && (
-                <div className='mt-4 p-3 bg-gray-900 border border-gray-800 rounded text-gray-300 text-sm text-center'>
-                    Token created successfully
+                <div className='mt-4 p-4 bg-gray-900 border border-cyan-500/30 rounded-lg text-white text-sm text-center' style={{boxShadow: '0 0 20px rgba(56, 189, 248, 0.3)'}}>
+                    ✓ Token created successfully
                 </div>
             )}
         </div>
