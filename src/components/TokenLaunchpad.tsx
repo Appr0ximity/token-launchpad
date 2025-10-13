@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { InputField } from "../ui/InputField"
-import { createInitializeMetadataPointerInstruction, createInitializeMintInstruction, ExtensionType, getMintLen, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token"
+import { createInitializeMetadataPointerInstruction, createInitializeMintInstruction, ExtensionType, getAssociatedTokenAddressSync, getMintLen, LENGTH_SIZE, TOKEN_2022_PROGRAM_ID, TYPE_SIZE } from "@solana/spl-token"
 import { useConnection, useWallet } from "@solana/wallet-adapter-react"
 import { Keypair, PublicKey, SystemProgram, Transaction} from "@solana/web3.js"
 import { createInitializeInstruction, createUpdateFieldInstruction, pack, type TokenMetadata } from "@solana/spl-token-metadata"
@@ -12,13 +12,13 @@ export const TokenLaunchpad = ()=>{
     const [formData, setFormData] = useState<{ 
         name: string,
         symbol: string,
-        initialSupply: number,
+        decimals: number,
         imageUrl: string,
         description: string
      }>({ 
         name: "",
         symbol: "",
-        initialSupply: 0,
+        decimals: 0,
         imageUrl: "",
         description: ""
     })
@@ -52,10 +52,14 @@ export const TokenLaunchpad = ()=>{
             additionalMetadata: [["description", formData.description]]
         }
 
+        const descriptionFieldSize = 
+        TYPE_SIZE
+        + LENGTH_SIZE  
+        "description".length + 
+        formData.description.length;
         const metadataLen = pack(metaData).length
         const mintLen = getMintLen([ExtensionType.MetadataPointer])
-        const lamports = await connection.getMinimumBalanceForRentExemption(mintLen + metadataLen)
-
+        const lamports = await connection.getMinimumBalanceForRentExemption(mintLen + metadataLen + descriptionFieldSize)
 
         setLoading(true)
 
@@ -68,7 +72,6 @@ export const TokenLaunchpad = ()=>{
                 TOKEN_2022_PROGRAM_ID
             );
 
-
             const initializeMintInstruction = createInitializeMintInstruction(
                 mint.publicKey,
                 decimals,
@@ -76,7 +79,6 @@ export const TokenLaunchpad = ()=>{
                 freezeAuthority,
                 TOKEN_2022_PROGRAM_ID
             )
-
 
             const initializeMetadataInstruction = createInitializeInstruction({
                 programId: TOKEN_2022_PROGRAM_ID,
@@ -89,7 +91,6 @@ export const TokenLaunchpad = ()=>{
                 uri: metaData.uri
             });
 
-
             const updateFieldInstruction = createUpdateFieldInstruction({
                 programId: TOKEN_2022_PROGRAM_ID,
                 metadata: mint.publicKey,
@@ -98,12 +99,14 @@ export const TokenLaunchpad = ()=>{
                 value: metaData.additionalMetadata[0][1]
             })
 
-            console.log('mintLen:', mintLen);
-            console.log('metadataLen:', metadataLen);
-            console.log('total space:', mintLen + metadataLen);
-            console.log('lamports:', lamports);
+            const createAssociatedToken = getAssociatedTokenAddressSync(
+                mint.publicKey,
+                wallet.publicKey,
+                false,
+                TOKEN_2022_PROGRAM_ID
+            )
 
-
+            const {blockhash, lastValidBlockHeight} = await connection.getLatestBlockhash()
 
             const transaction = new Transaction().add(
                 SystemProgram.createAccount({
@@ -119,30 +122,20 @@ export const TokenLaunchpad = ()=>{
                 updateFieldInstruction
             );
 
-
-            const {blockhash} = await connection.getLatestBlockhash()
+            
             transaction.recentBlockhash = blockhash;
             transaction.feePayer = wallet.publicKey
             transaction.partialSign(mint)
 
-
             const signedTransaction = await wallet.signTransaction(transaction)
             const signature = await connection.sendRawTransaction(signedTransaction.serialize())
-            const confirmation = await connection.confirmTransaction(signature, "confirmed")
 
-
-            if (confirmation.value.err) {
-                throw new Error('Transaction failed to confirm');
-            }
-
-
-
-            alert(`Token created! Mint address: ${mint.publicKey.toBase58()}`);
+            alert(`Token creation submitted! Check status: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+            console.log(signature)
             setSuccess(true)
             setTimeout(()=>{
                 setSuccess(false)
             },2000)
-
 
         }catch(error){
             console.log('Full error object:', error);
@@ -170,13 +163,10 @@ export const TokenLaunchpad = ()=>{
 
     }
     
-    
-
-
     return <div>
         <InputField value={formData.name} onChange={(val) => setFormData({...formData, name: val})} placeholder='Name of Token'></InputField>
         <InputField value={formData.symbol} onChange={(val) => setFormData({...formData, symbol: val})} placeholder='Symbol'></InputField>
-        <InputField value={formData.initialSupply} onChange={(val) => setFormData({...formData, initialSupply: parseInt(val)})} placeholder='Initial Supply'></InputField>
+        <InputField value={formData.decimals} onChange={(val) => setFormData({...formData, decimals: parseInt(val)})} placeholder='Decimals'></InputField>
         <InputField value={formData.description} onChange={(val) => setFormData({...formData, description: val})} placeholder='Description'></InputField>
         <InputField value={formData.imageUrl} onChange={(val) => setFormData({...formData, imageUrl: val})} placeholder='Image URL'></InputField>
         <button disabled = {loading} onClick={()=>{
@@ -186,9 +176,8 @@ export const TokenLaunchpad = ()=>{
         createToken(
             wallet.publicKey,
             null,
-            9
+            formData.decimals
         )}} className='bg-gray-400 rounded-sm px-3 py-1 my-3 cursor-pointer hover:bg-gray-800 duration-200 hover:text-white'>{loading?"Creating a token..":"Submit"}</button>
         {success && <span>Token Created Successfully!</span>}
-            
     </div>
 }
