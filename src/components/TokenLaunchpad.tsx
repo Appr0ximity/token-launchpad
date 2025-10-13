@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { InputField } from "../ui/InputField"
-import { createInitializeMetadataPointerInstruction, createInitializeMintInstruction, ExtensionType, getAssociatedTokenAddressSync, getMintLen, LENGTH_SIZE, TOKEN_2022_PROGRAM_ID, TYPE_SIZE } from "@solana/spl-token"
+import { createAssociatedTokenAccountInstruction, createInitializeMetadataPointerInstruction, createInitializeMintInstruction, createMintToInstruction, ExtensionType, getAssociatedTokenAddressSync, getMintLen, LENGTH_SIZE, TOKEN_2022_PROGRAM_ID, TYPE_SIZE } from "@solana/spl-token"
 import { useConnection, useWallet } from "@solana/wallet-adapter-react"
 import { Keypair, PublicKey, SystemProgram, Transaction} from "@solana/web3.js"
 import { createInitializeInstruction, createUpdateFieldInstruction, pack, type TokenMetadata } from "@solana/spl-token-metadata"
@@ -13,12 +13,14 @@ export const TokenLaunchpad = ()=>{
         name: string,
         symbol: string,
         decimals: number,
+        initialSupply: number,
         imageUrl: string,
         description: string
      }>({ 
         name: "",
         symbol: "",
         decimals: 0,
+        initialSupply: 0,
         imageUrl: "",
         description: ""
     })
@@ -53,9 +55,9 @@ export const TokenLaunchpad = ()=>{
         }
 
         const descriptionFieldSize = 
-        TYPE_SIZE
-        + LENGTH_SIZE  
-        "description".length + 
+        TYPE_SIZE +
+        LENGTH_SIZE +
+        "description".length +
         formData.description.length;
         const metadataLen = pack(metaData).length
         const mintLen = getMintLen([ExtensionType.MetadataPointer])
@@ -106,7 +108,7 @@ export const TokenLaunchpad = ()=>{
                 TOKEN_2022_PROGRAM_ID
             )
 
-            const {blockhash, lastValidBlockHeight} = await connection.getLatestBlockhash()
+            const {blockhash} = await connection.getLatestBlockhash()
 
             const transaction = new Transaction().add(
                 SystemProgram.createAccount({
@@ -131,6 +133,36 @@ export const TokenLaunchpad = ()=>{
             const signature = await connection.sendRawTransaction(signedTransaction.serialize())
 
             alert(`Token creation submitted! Check status: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+
+            // If user wants initial supply, mint it
+            if (formData.initialSupply && formData.initialSupply > 0) {
+                // Create ATA transaction
+                const transaction2 = new Transaction().add(
+                    createAssociatedTokenAccountInstruction(
+                        wallet.publicKey,
+                        createAssociatedToken,
+                        wallet.publicKey,
+                        mint.publicKey,
+                        TOKEN_2022_PROGRAM_ID,
+                    )
+                );
+                await wallet.sendTransaction(transaction2, connection);
+                
+                // Mint tokens
+                const mintAmount = formData.initialSupply * Math.pow(10, decimals);
+                const transaction3 = new Transaction().add(
+                    createMintToInstruction(
+                        mint.publicKey,
+                        createAssociatedToken,
+                        wallet.publicKey,
+                        mintAmount,
+                        [],
+                        TOKEN_2022_PROGRAM_ID
+                    )
+                );
+                await wallet.sendTransaction(transaction3, connection);
+            }
+
             console.log(signature)
             setSuccess(true)
             setTimeout(()=>{
@@ -167,6 +199,7 @@ export const TokenLaunchpad = ()=>{
         <InputField value={formData.name} onChange={(val) => setFormData({...formData, name: val})} placeholder='Name of Token'></InputField>
         <InputField value={formData.symbol} onChange={(val) => setFormData({...formData, symbol: val})} placeholder='Symbol'></InputField>
         <InputField value={formData.decimals} onChange={(val) => setFormData({...formData, decimals: parseInt(val)})} placeholder='Decimals'></InputField>
+        <InputField value={formData.initialSupply} onChange={(val) => setFormData({...formData, initialSupply: parseInt(val)})} placeholder='Decimals'></InputField>
         <InputField value={formData.description} onChange={(val) => setFormData({...formData, description: val})} placeholder='Description'></InputField>
         <InputField value={formData.imageUrl} onChange={(val) => setFormData({...formData, imageUrl: val})} placeholder='Image URL'></InputField>
         <button disabled = {loading} onClick={()=>{
