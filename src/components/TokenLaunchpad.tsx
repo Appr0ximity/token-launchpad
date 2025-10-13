@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { InputField } from "../ui/InputField"
-import { createInitializeMetadataPointerInstruction, createInitializeMint2Instruction, ExtensionType, getMintLen, LENGTH_SIZE, TOKEN_2022_PROGRAM_ID, TYPE_SIZE } from "@solana/spl-token"
+import { createInitializeMetadataPointerInstruction, createInitializeMintInstruction, ExtensionType, getMintLen, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token"
 import { useConnection, useWallet } from "@solana/wallet-adapter-react"
 import { Keypair, PublicKey, SystemProgram, Transaction} from "@solana/web3.js"
 import { createInitializeInstruction, createUpdateFieldInstruction, pack, type TokenMetadata } from "@solana/spl-token-metadata"
@@ -32,7 +32,6 @@ export const TokenLaunchpad = ()=>{
         payerPublicKey: PublicKey,
         freezeAuthority: PublicKey | null,
         decimals: number,
-        mint = Keypair.generate(),
         programId = TOKEN_2022_PROGRAM_ID,
     )=>{
         if(!wallet || wallet ===undefined || !wallet.publicKey){
@@ -43,7 +42,7 @@ export const TokenLaunchpad = ()=>{
             return
         }
 
-
+        const mint = Keypair.generate()
         const metaData: TokenMetadata = {
             updateAuthority: wallet.publicKey,
             mint: mint.publicKey,
@@ -52,7 +51,8 @@ export const TokenLaunchpad = ()=>{
             uri: formData.imageUrl,
             additionalMetadata: [["description", formData.description]]
         }
-        const metadataLen = TYPE_SIZE + LENGTH_SIZE + pack(metaData).length
+
+        const metadataLen = pack(metaData).length
         const mintLen = getMintLen([ExtensionType.MetadataPointer])
         const lamports = await connection.getMinimumBalanceForRentExemption(mintLen + metadataLen)
 
@@ -69,7 +69,7 @@ export const TokenLaunchpad = ()=>{
             );
 
 
-            const initializeMintInstruction = createInitializeMint2Instruction(
+            const initializeMintInstruction = createInitializeMintInstruction(
                 mint.publicKey,
                 decimals,
                 wallet.publicKey,
@@ -97,6 +97,11 @@ export const TokenLaunchpad = ()=>{
                 field: metaData.additionalMetadata[0][0],
                 value: metaData.additionalMetadata[0][1]
             })
+
+            console.log('mintLen:', mintLen);
+            console.log('metadataLen:', metadataLen);
+            console.log('total space:', mintLen + metadataLen);
+            console.log('lamports:', lamports);
 
 
 
