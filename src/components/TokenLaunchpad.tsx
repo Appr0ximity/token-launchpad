@@ -193,14 +193,15 @@ export const TokenLaunchpad = ()=>{
 
     }
     
-    return <div className='w-full max-w-3xl mx-auto'>
-        <div className='bg-[#0d0d0d] border border-gray-800 rounded-xl p-8 shadow-2xl' style={{boxShadow: '0 0 40px rgba(56, 189, 248, 0.1), 0 20px 25px -5px rgba(0, 0, 0, 0.5)'}}>
-            <div className='mb-8'>
-                <h2 className='text-2xl font-semibold text-white mb-2'>
-                    Create Token
-                </h2>
-                <p className='text-sm text-gray-400'>Deploy your SPL token on Solana in seconds</p>
-            </div>
+    return <div className='w-full max-w-3xl mx-auto space-y-6'>
+            {/* Form Section */}
+            <div className='bg-[#0d0d0d] border border-gray-800 rounded-xl p-8 shadow-2xl' style={{boxShadow: '0 0 40px rgba(56, 189, 248, 0.1), 0 20px 25px -5px rgba(0, 0, 0, 0.5)'}}>
+                <div className='mb-8'>
+                    <h2 className='text-2xl font-semibold text-white mb-2'>
+                        Create Token
+                    </h2>
+                    <p className='text-sm text-gray-400'>Deploy your SPL token on Solana in seconds</p>
+                </div>
             
             <div className='space-y-6'>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
@@ -236,7 +237,7 @@ export const TokenLaunchpad = ()=>{
                 </div>
             </div>
 
-            <button 
+                <button 
                 disabled={loading} 
                 onClick={()=>{
                     if(!wallet.publicKey || !wallet.signTransaction){
@@ -254,13 +255,66 @@ export const TokenLaunchpad = ()=>{
                 onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 0 20px rgba(56, 189, 248, 0.2)')}
             >
                 {loading ? "Creating Token..." : "Create Token"}
-            </button>
-            
-            {success && (
-                <div className='mt-4 p-4 bg-gray-900 border border-cyan-500/30 rounded-lg text-white text-sm text-center' style={{boxShadow: '0 0 20px rgba(56, 189, 248, 0.3)'}}>
-                    ✓ Token created successfully
+                </button>
+                
+                {success && (
+                    <div className='mt-4 p-4 bg-gray-900 border border-cyan-500/30 rounded-lg text-white text-sm text-center' style={{boxShadow: '0 0 20px rgba(56, 189, 248, 0.3)'}}>
+                        ✓ Token created successfully
+                    </div>
+                )}
+            </div>
+
+            {/* Preview Section */}
+            <div className='bg-[#0d0d0d] border border-gray-800 rounded-xl p-5 shadow-xl' style={{boxShadow: '0 0 30px rgba(56, 189, 248, 0.08)'}}>
+                <div className='mb-4'>
+                    <h3 className='text-sm font-semibold text-gray-400 mb-3'>PREVIEW</h3>
                 </div>
-            )}
-        </div>
+
+                {/* Token Card Preview - Compact */}
+                <div className='bg-gray-900 border border-gray-800 rounded-lg p-4 hover:border-cyan-500/30 transition-all duration-300'>
+                    <div className='flex items-center gap-3'>
+                        {/* Token Image */}
+                        <div className='flex-shrink-0'>
+                            <div className='w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-lg font-bold overflow-hidden'>
+                                {formData.imageUrl ? (
+                                    <img 
+                                        src={formData.imageUrl} 
+                                        alt={formData.name || 'Token'} 
+                                        className='w-full h-full object-cover'
+                                    />
+                                ) : (
+                                    formData.symbol ? formData.symbol.charAt(0).toUpperCase() : '?'
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Token Info */}
+                        <div className='flex-1 min-w-0'>
+                            <h3 className='text-base font-semibold text-white truncate'>
+                                {formData.name || 'Token Name'}
+                            </h3>
+                            <p className='text-xs text-gray-400'>
+                                {formData.symbol || 'SYMBOL'}
+                            </p>
+                        </div>
+
+                        {/* Token Stats - Inline */}
+                        <div className='flex gap-3 text-right'>
+                            <div>
+                                <p className='text-xs text-gray-500'>Supply</p>
+                                <p className='text-sm font-semibold text-white'>
+                                    {formData.initialSupply ? parseInt(formData.initialSupply).toLocaleString() : '0'}
+                                </p>
+                            </div>
+                            <div>
+                                <p className='text-xs text-gray-500'>Decimals</p>
+                                <p className='text-sm font-semibold text-white'>
+                                    {formData.decimals || '0'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
     </div>
 }

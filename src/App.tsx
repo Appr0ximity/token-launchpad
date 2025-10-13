@@ -12,14 +12,14 @@ function App() {
       <WalletProvider wallets={[]}>
         <WalletModalProvider>
           {/* Header */}
-          <div className='sticky top-0 z-50 w-full border-b border-gray-800 bg-black/95 backdrop-blur'>
+          <div className='sticky top-0 z-50 w-full py-3 border-b border-gray-800 bg-black/95 backdrop-blur'>
             <div className='max-w-7xl mx-auto flex h-16 items-center justify-between px-8'>
               <div className='flex items-center gap-2'>
                 <div className='flex flex-col'>
-                  <h1 className='text-xl font-semibold text-white' style={{textShadow: '0 0 20px rgba(56, 189, 248, 0.3)'}}>
+                  <h1 className='text-4xl font-semibold text-white' style={{textShadow: '0 0 20px rgba(56, 189, 248, 0.3)'}}>
                     Token Launchpad
                   </h1>
-                  <p className='text-xs text-gray-400'>Solana SPL Token Creator</p>
+                  <p className='text-xs text-gray-400 ml-3'>Solana SPL Token Creator</p>
                 </div>
               </div>
               <div className='flex gap-3'>
@@ -30,7 +30,7 @@ function App() {
           </div>
           
           {/* Main Content */}
-          <div className='w-full px-8 py-12 flex items-center justify-center min-h-[calc(100vh-64px)]'>
+          <div className='w-full px-8 py-8'>
             <TokenLaunchpad></TokenLaunchpad>
           </div>
         </WalletModalProvider>
