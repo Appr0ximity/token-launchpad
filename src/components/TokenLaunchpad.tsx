@@ -193,22 +193,67 @@ export const TokenLaunchpad = ()=>{
 
     }
     
-    return <div className='flex flex-col items-center'>
-        <InputField value={formData.name} onChange={(val) => setFormData({...formData, name: val})} placeholder='Name of Token'></InputField>
-        <InputField value={formData.symbol} onChange={(val) => setFormData({...formData, symbol: val})} placeholder='Symbol'></InputField>
-        <InputField value={formData.decimals} onChange={(val) => setFormData({...formData, decimals: val})} placeholder='Decimals'></InputField>
-        <InputField value={formData.initialSupply} onChange={(val) => setFormData({...formData, initialSupply: val})} placeholder='Initial Supply'></InputField>
-        <InputField value={formData.description} onChange={(val) => setFormData({...formData, description: val})} placeholder='Description'></InputField>
-        <InputField value={formData.imageUrl} onChange={(val) => setFormData({...formData, imageUrl: val})} placeholder='Image URL'></InputField>
-        <button disabled = {loading} onClick={()=>{
-        if(!wallet.publicKey || !wallet.signTransaction){
-            return
-        }
-        createToken(
-            wallet.publicKey,
-            null,
-            parseInt(formData.decimals) || 0
-        )}} className='bg-gray-400 rounded-sm px-3 py-1 my-3 cursor-pointer hover:bg-gray-800 duration-200 hover:text-white'>{loading?"Creating a token..":"Submit"}</button>
-        {success && <span>Token Created Successfully!</span>}
+    return <div className='w-full max-w-2xl mx-auto'>
+        <div className='border border-gray-800 rounded-lg p-8 bg-gray-950'>
+            <div className='mb-8'>
+                <h2 className='text-xl font-medium text-white mb-1'>
+                    Create Token
+                </h2>
+                <p className='text-sm text-gray-500'>Fill in the details below to launch your token</p>
+            </div>
+            
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
+                <div>
+                    <label className='text-xs text-gray-500 mb-1.5 block font-medium'>TOKEN NAME</label>
+                    <InputField value={formData.name} onChange={(val) => setFormData({...formData, name: val})} placeholder='My Token'></InputField>
+                </div>
+                <div>
+                    <label className='text-xs text-gray-500 mb-1.5 block font-medium'>SYMBOL</label>
+                    <InputField value={formData.symbol} onChange={(val) => setFormData({...formData, symbol: val})} placeholder='MTK'></InputField>
+                </div>
+                <div>
+                    <label className='text-xs text-gray-500 mb-1.5 block font-medium'>DECIMALS</label>
+                    <InputField value={formData.decimals} onChange={(val) => setFormData({...formData, decimals: val})} placeholder='9'></InputField>
+                </div>
+                <div>
+                    <label className='text-xs text-gray-500 mb-1.5 block font-medium'>INITIAL SUPPLY</label>
+                    <InputField value={formData.initialSupply} onChange={(val) => setFormData({...formData, initialSupply: val})} placeholder='1000000'></InputField>
+                </div>
+            </div>
+
+            <div className='space-y-4'>
+                <div>
+                    <label className='text-xs text-gray-500 mb-1.5 block font-medium'>DESCRIPTION</label>
+                    <InputField value={formData.description} onChange={(val) => setFormData({...formData, description: val})} placeholder='Describe your token'></InputField>
+                </div>
+                <div>
+                    <label className='text-xs text-gray-500 mb-1.5 block font-medium'>IMAGE URL</label>
+                    <InputField value={formData.imageUrl} onChange={(val) => setFormData({...formData, imageUrl: val})} placeholder='https://example.com/image.png'></InputField>
+                </div>
+            </div>
+
+            <button 
+                disabled={loading} 
+                onClick={()=>{
+                    if(!wallet.publicKey || !wallet.signTransaction){
+                        return
+                    }
+                    createToken(
+                        wallet.publicKey,
+                        null,
+                        parseInt(formData.decimals) || 0
+                    )
+                }} 
+                className='w-full mt-8 bg-white text-black px-4 py-3 rounded font-medium hover:bg-gray-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white'
+            >
+                {loading ? "Creating Token..." : "Create Token"}
+            </button>
+            
+            {success && (
+                <div className='mt-4 p-3 bg-gray-900 border border-gray-800 rounded text-gray-300 text-sm text-center'>
+                    Token created successfully
+                </div>
+            )}
+        </div>
     </div>
 }
