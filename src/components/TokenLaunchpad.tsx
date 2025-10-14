@@ -37,6 +37,7 @@ export const TokenLaunchpad = ()=>{
         programId = TOKEN_2022_PROGRAM_ID,
     )=>{
         if(!wallet || wallet ===undefined || !wallet.publicKey){
+            alert("Connect to your wallet first!")
             return
         }
         if(!wallet.signTransaction){
